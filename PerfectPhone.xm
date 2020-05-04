@@ -4,6 +4,11 @@
 static HBPreferences *pref;
 static BOOL enabled;
 static BOOL showExactTimeInRecentCalls;
+static long defaultTab;
+static BOOL hideFavourites;
+static BOOL hideRecents;
+static BOOL hideContacts;
+static BOOL hideKeypad;
 static BOOL hideVoicemail;
 static BOOL longerCallButton;
 
@@ -34,15 +39,42 @@ CGFloat screenWidth;
 
 %end
 
-// -------------------------- HIDE VOICEMAIL TAB --------------------------
+// -------------------------- CUSTOM DEFAULT OPENED TAB --------------------------
 
-%group hideVoicemailGroup
+%group defaultTabGroup
+
+	%hook PhoneTabBarController
+
+	- (int)currentTabViewType
+	{
+		if(defaultTab == 1 && !hideFavourites 
+		|| defaultTab == 2 && !hideRecents 
+		|| defaultTab == 3 && !hideContacts 
+		|| defaultTab == 4 && !hideKeypad
+		|| defaultTab == 5 && !hideVoicemail)
+			return defaultTab;
+		else	
+			return %orig;
+	}
+
+	- (int)defaultTabViewType
+	{
+		return defaultTab;
+	}
+
+	%end
+
+%end
+
+// -------------------------- HIDE TABS --------------------------
+
+%group hideTabsGroup
 
 	%hook PhoneTabBarController
 
 	- (void)showFavoritesTab: (BOOL)tab recentsTab: (BOOL)tab2 contactsTab: (BOOL)tab3 keypadTab: (BOOL)tab4 voicemailTab: (BOOL)tab5
 	{
-		%orig(YES, YES, YES, YES, NO);
+		%orig(!hideFavourites, !hideRecents, !hideContacts, !hideKeypad, !hideVoicemail);
 	}
 
 	%end
@@ -94,6 +126,11 @@ CGFloat screenWidth;
 		@{
 			@"enabled": @NO,
 			@"showExactTimeInRecentCalls": @NO,
+			@"defaultTab": @1,
+			@"hideFavourites": @NO,
+			@"hideRecents": @NO,
+			@"hideContacts": @NO,
+			@"hideKeypad": @NO,
 			@"hideVoicemail": @NO,
 			@"longerCallButton": @NO
     	}];
@@ -102,6 +139,11 @@ CGFloat screenWidth;
 		if(enabled)
 		{
 			showExactTimeInRecentCalls = [pref boolForKey: @"showExactTimeInRecentCalls"];
+			defaultTab = [pref integerForKey: @"defaultTab"];
+			hideFavourites = [pref boolForKey: @"hideFavourites"];
+			hideRecents = [pref boolForKey: @"hideRecents"];
+			hideContacts = [pref boolForKey: @"hideContacts"];
+			hideKeypad = [pref boolForKey: @"hideKeypad"];
 			hideVoicemail = [pref boolForKey: @"hideVoicemail"];
 			longerCallButton = [pref boolForKey: @"longerCallButton"];
 
@@ -112,7 +154,28 @@ CGFloat screenWidth;
 
 				%init(showExactTimeInRecentCallsGroup);
 			}
-			if(hideVoicemail) %init(hideVoicemailGroup);
+
+			if((hideFavourites || hideRecents || hideContacts || hideKeypad || hideVoicemail) && !(hideFavourites && hideRecents && hideContacts && hideKeypad)) 
+				%init(hideTabsGroup);
+			else
+			{
+				hideFavourites = NO;
+				hideRecents = NO;
+				hideContacts = NO;
+				hideKeypad = NO;
+				hideVoicemail = NO;
+			}
+
+			if(defaultTab < 1 || defaultTab > 4)
+				defaultTab = 1;
+			while(defaultTab == 1 && hideFavourites || defaultTab == 2 && hideRecents || defaultTab == 3 && hideContacts || defaultTab == 4 && hideKeypad)
+			{
+				defaultTab++;
+				if(defaultTab == 5)
+					defaultTab = 1;
+			}
+			%init(defaultTabGroup);
+			
 			if(longerCallButton)
 			{
 				screenWidth = [[UIScreen mainScreen] bounds].size.width;

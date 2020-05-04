@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = PerfectPhone
 PerfectPhone_FILES = PerfectPhone.xm
-PerfectPhone_CFLAGS = -fobjc-arc
+PerfectPhone_CFLAGS = -fobjc-arc -Wno-logical-op-parentheses
 PerfectPhone_EXTRA_FRAMEWORKS += Cephei
 
 include $(THEOS_MAKE_PATH)/tweak.mk

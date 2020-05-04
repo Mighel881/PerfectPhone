@@ -54,9 +54,29 @@
 			<key>defaults</key>
 			<string>com.johnzaro.perfectphoneprefs</string>
 			<key>key</key>
-			<string>hideVoicemail</string>
+			<string>longerCallButton</string>
 			<key>label</key>
-			<string>Hide Voicemail</string>
+			<string>Longer Call Button</string>
+		</dict>
+		<dict>
+        	<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>HIDE TABS</string>
+			<key>footerText</key>
+			<string>AT LEAST ONE OF THE 'FAVOURITES', 'RECENTS', 'CONTACTS' OR 'KEYPAD' TABS SHOULD BE UNHIDDEN.</string>
+        </dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>hideFavourites</string>
+			<key>label</key>
+			<string>Hide Favourites</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -66,9 +86,77 @@
 			<key>defaults</key>
 			<string>com.johnzaro.perfectphoneprefs</string>
 			<key>key</key>
-			<string>longerCallButton</string>
+			<string>hideRecents</string>
 			<key>label</key>
-			<string>Longer Call Button</string>
+			<string>Hide Recents</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>hideContacts</string>
+			<key>label</key>
+			<string>Hide Contacts</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>hideKeypad</string>
+			<key>label</key>
+			<string>Hide Keypad</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>hideVoicemail</string>
+			<key>label</key>
+			<string>Hide Voicemail</string>
+		</dict>
+		<dict>
+        	<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>DEFAULT OPENED TAB</string>
+			<key>footerText</key>
+			<string>YOU SHOULD NOT CHOOSE A TAB YOU HAVE HIDDEN AS THE DEFAULT TAB.</string>
+        </dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>default</key>
+			<integer>1</integer>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>defaultTab</string>
+			<key>validTitles</key>
+			<array>
+      			<string>Favourites</string>
+      			<string>Recents</string>
+      			<string>Contacts</string>
+				<string>Keypad</string>
+			</array>
+      		<key>validValues</key>
+			<array>
+      			<string>1</string>
+      			<string>2</string>
+      			<string>3</string>
+				<string>4</string>
+			</array>
 		</dict>
 		<dict>
         	<key>cell</key>
