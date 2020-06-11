@@ -11,6 +11,7 @@ static BOOL hideContacts;
 static BOOL hideKeypad;
 static BOOL hideVoicemail;
 static BOOL longerCallButton;
+static BOOL hideThirdParyCalls;
 
 NSDateFormatter *dateFormatter;
 CGFloat screenWidth;
@@ -117,6 +118,21 @@ CGFloat screenWidth;
 
 %end
 
+// -------------------------- HIDE THIRD PARTY CALLS FROM RECENT CALLS --------------------------
+
+%group hideThirdParyCallsGroup
+
+	%hook MobilePhoneApplication
+
+	- (BOOL)showsThirdPartyRecents
+	{
+		return NO;
+	}
+
+	%end
+
+%end
+
 %ctor
 {
 	@autoreleasepool
@@ -132,7 +148,8 @@ CGFloat screenWidth;
 			@"hideContacts": @NO,
 			@"hideKeypad": @NO,
 			@"hideVoicemail": @NO,
-			@"longerCallButton": @NO
+			@"longerCallButton": @NO,
+			@"hideThirdParyCalls": @NO
     	}];
 
 		enabled = [pref boolForKey: @"enabled"];
@@ -146,11 +163,21 @@ CGFloat screenWidth;
 			hideKeypad = [pref boolForKey: @"hideKeypad"];
 			hideVoicemail = [pref boolForKey: @"hideVoicemail"];
 			longerCallButton = [pref boolForKey: @"longerCallButton"];
+			hideThirdParyCalls = [pref boolForKey: @"hideThirdParyCalls"];
 
 			if(showExactTimeInRecentCalls) 
 			{
 				dateFormatter = [[NSDateFormatter alloc] init];
-				[dateFormatter setDateFormat: @"\nHH:mm"];
+
+				NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+				[formatter setLocale: [NSLocale currentLocale]];
+				[formatter setDateStyle: NSDateFormatterNoStyle];
+				[formatter setTimeStyle: NSDateFormatterShortStyle];
+				NSString *dateString = [formatter stringFromDate: [NSDate date]];
+				if([dateString rangeOfString: [formatter AMSymbol]].location == NSNotFound && [dateString rangeOfString: [formatter PMSymbol]].location == NSNotFound)
+					[dateFormatter setDateFormat: @"\nHH:mm"];
+				else
+					[dateFormatter setDateFormat: @"\nh:mm a"];
 
 				%init(showExactTimeInRecentCallsGroup);
 			}
@@ -179,9 +206,11 @@ CGFloat screenWidth;
 			if(longerCallButton)
 			{
 				screenWidth = [[UIScreen mainScreen] bounds].size.width;
-
 				%init(longerCallButtonGroup);
 			}
+
+			if(hideThirdParyCalls)
+				%init(hideThirdParyCallsGroup);
 		}
 	}
 }

@@ -32,7 +32,7 @@
         	<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
-			<string>Settings</string>
+			<string>RECENT CALLS SCREEN</string>
         </dict>
 		<dict>
 			<key>cell</key>
@@ -46,6 +46,24 @@
 			<key>label</key>
 			<string>Exact Time In Recent Calls</string>
 		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.johnzaro.perfectphoneprefs</string>
+			<key>key</key>
+			<string>hideThirdParyCalls</string>
+			<key>label</key>
+			<string>Hide Third Pary Calls</string>
+		</dict>
+		<dict>
+        	<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>DIAL SCREEN</string>
+        </dict>
 		<dict>
 			<key>cell</key>
 			<string>PSSwitchCell</string>
