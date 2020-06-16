@@ -1,17 +1,22 @@
 #import "PerfectPhone.h"
 #import <Cephei/HBPreferences.h>
+#import "SparkColourPickerUtils.h"
 
 static HBPreferences *pref;
 static BOOL enabled;
 static BOOL showExactTimeInRecentCalls;
-static long defaultTab;
+static BOOL hideThirdParyCalls;
+static BOOL colorizeCalls;
+static UIColor *incomingColor;
+static UIColor *outgoingColor;
+static UIColor *missedColor;
+static BOOL longerCallButton;
 static BOOL hideFavourites;
 static BOOL hideRecents;
 static BOOL hideContacts;
 static BOOL hideKeypad;
 static BOOL hideVoicemail;
-static BOOL longerCallButton;
-static BOOL hideThirdParyCalls;
+static NSInteger defaultTab;
 
 NSDateFormatter *dateFormatter;
 CGFloat screenWidth;
@@ -40,42 +45,47 @@ CGFloat screenWidth;
 
 %end
 
-// -------------------------- CUSTOM DEFAULT OPENED TAB --------------------------
+// -------------------------- HIDE THIRD PARTY CALLS FROM RECENT CALLS --------------------------
 
-%group defaultTabGroup
+%group hideThirdParyCallsGroup
 
-	%hook PhoneTabBarController
+	%hook MobilePhoneApplication
 
-	- (int)currentTabViewType
+	- (BOOL)showsThirdPartyRecents
 	{
-		if(defaultTab == 1 && !hideFavourites 
-		|| defaultTab == 2 && !hideRecents 
-		|| defaultTab == 3 && !hideContacts 
-		|| defaultTab == 4 && !hideKeypad
-		|| defaultTab == 5 && !hideVoicemail)
-			return defaultTab;
-		else	
-			return %orig;
-	}
-
-	- (int)defaultTabViewType
-	{
-		return defaultTab;
+		return NO;
 	}
 
 	%end
 
 %end
 
-// -------------------------- HIDE TABS --------------------------
+// -------------------------- COLORIZE RECENT CALLS --------------------------
 
-%group hideTabsGroup
+%group coloredRecentCallsGroup
 
-	%hook PhoneTabBarController
+	// Original tweak by @leftyfl1p: https://github.com/leftyfl1p/ColorCodedLogs
 
-	- (void)showFavoritesTab: (BOOL)tab recentsTab: (BOOL)tab2 contactsTab: (BOOL)tab3 keypadTab: (BOOL)tab4 voicemailTab: (BOOL)tab5
+	%hook MPRecentsTableViewController
+
+	// incoming call = 1, answered elsewhere (another device) = 4, 
+	// outgoing call = 2, outgoing but cancelled = 16
+
+	- (id)tableView: (id)arg1 cellForRowAtIndexPath: (NSIndexPath*)arg2
 	{
-		%orig(!hideFavourites, !hideRecents, !hideContacts, !hideKeypad, !hideVoicemail);
+		MPRecentsTableViewCell *orig = %orig;
+
+		UILabel *nameLabel = [[orig titleStackView] arrangedSubviews][0];
+		CHRecentCall *callInfo = [self recentCallAtTableViewIndex: arg2.row];
+
+		if([callInfo callStatus] == 1 || [callInfo callStatus] == 4)
+			[nameLabel setTextColor: incomingColor];
+		else if([callInfo callStatus] == 2 || [callInfo callStatus] == 16) 
+			[nameLabel setTextColor: outgoingColor];
+		else
+			[nameLabel setTextColor: missedColor];
+
+		return orig;
 	}
 
 	%end
@@ -118,15 +128,42 @@ CGFloat screenWidth;
 
 %end
 
-// -------------------------- HIDE THIRD PARTY CALLS FROM RECENT CALLS --------------------------
+// -------------------------- HIDE TABS --------------------------
 
-%group hideThirdParyCallsGroup
+%group hideTabsGroup
 
-	%hook MobilePhoneApplication
+	%hook PhoneTabBarController
 
-	- (BOOL)showsThirdPartyRecents
+	- (void)showFavoritesTab: (BOOL)tab recentsTab: (BOOL)tab2 contactsTab: (BOOL)tab3 keypadTab: (BOOL)tab4 voicemailTab: (BOOL)tab5
 	{
-		return NO;
+		%orig(!hideFavourites, !hideRecents, !hideContacts, !hideKeypad, !hideVoicemail);
+	}
+
+	%end
+
+%end
+
+// -------------------------- CUSTOM DEFAULT OPENED TAB --------------------------
+
+%group defaultTabGroup
+
+	%hook PhoneTabBarController
+
+	- (int)currentTabViewType
+	{
+		if(defaultTab == 1 && !hideFavourites 
+		|| defaultTab == 2 && !hideRecents 
+		|| defaultTab == 3 && !hideContacts 
+		|| defaultTab == 4 && !hideKeypad
+		|| defaultTab == 5 && !hideVoicemail)
+			return defaultTab;
+		else	
+			return %orig;
+	}
+
+	- (int)defaultTabViewType
+	{
+		return defaultTab;
 	}
 
 	%end
@@ -142,28 +179,30 @@ CGFloat screenWidth;
 		@{
 			@"enabled": @NO,
 			@"showExactTimeInRecentCalls": @NO,
-			@"defaultTab": @1,
+			@"hideThirdParyCalls": @NO,
+			@"colorizeCalls": @NO,
+			@"longerCallButton": @NO,
 			@"hideFavourites": @NO,
 			@"hideRecents": @NO,
 			@"hideContacts": @NO,
 			@"hideKeypad": @NO,
 			@"hideVoicemail": @NO,
-			@"longerCallButton": @NO,
-			@"hideThirdParyCalls": @NO
+			@"defaultTab": @1,
     	}];
 
 		enabled = [pref boolForKey: @"enabled"];
 		if(enabled)
 		{
 			showExactTimeInRecentCalls = [pref boolForKey: @"showExactTimeInRecentCalls"];
-			defaultTab = [pref integerForKey: @"defaultTab"];
+			hideThirdParyCalls = [pref boolForKey: @"hideThirdParyCalls"];
+			colorizeCalls = [pref boolForKey: @"colorizeCalls"];
+			longerCallButton = [pref boolForKey: @"longerCallButton"];
 			hideFavourites = [pref boolForKey: @"hideFavourites"];
 			hideRecents = [pref boolForKey: @"hideRecents"];
 			hideContacts = [pref boolForKey: @"hideContacts"];
 			hideKeypad = [pref boolForKey: @"hideKeypad"];
 			hideVoicemail = [pref boolForKey: @"hideVoicemail"];
-			longerCallButton = [pref boolForKey: @"longerCallButton"];
-			hideThirdParyCalls = [pref boolForKey: @"hideThirdParyCalls"];
+			defaultTab = [pref integerForKey: @"defaultTab"];
 
 			if(showExactTimeInRecentCalls) 
 			{
@@ -180,6 +219,25 @@ CGFloat screenWidth;
 					[dateFormatter setDateFormat: @"\nh:mm a"];
 
 				%init(showExactTimeInRecentCallsGroup);
+			}
+
+			if(hideThirdParyCalls)
+				%init(hideThirdParyCallsGroup);
+
+			if(colorizeCalls)
+			{
+				NSDictionary *preferencesDictionary = [NSDictionary dictionaryWithContentsOfFile: @"/var/mobile/Library/Preferences/com.johnzaro.perfectphoneprefs.colors.plist"];
+				incomingColor = [SparkColourPickerUtils colourWithString: [preferencesDictionary objectForKey: @"incomingColor"] withFallback: @"#24579C"];
+				outgoingColor = [SparkColourPickerUtils colourWithString: [preferencesDictionary objectForKey: @"outgoingColor"] withFallback: @"#007D00"];
+				missedColor = [SparkColourPickerUtils colourWithString: [preferencesDictionary objectForKey: @"missedColor"] withFallback: @"#DA0000"];
+
+				%init(coloredRecentCallsGroup);
+			}
+			
+			if(longerCallButton)
+			{
+				screenWidth = [[UIScreen mainScreen] bounds].size.width;
+				%init(longerCallButtonGroup);
 			}
 
 			if((hideFavourites || hideRecents || hideContacts || hideKeypad || hideVoicemail) && !(hideFavourites && hideRecents && hideContacts && hideKeypad)) 
@@ -202,15 +260,6 @@ CGFloat screenWidth;
 					defaultTab = 1;
 			}
 			%init(defaultTabGroup);
-			
-			if(longerCallButton)
-			{
-				screenWidth = [[UIScreen mainScreen] bounds].size.width;
-				%init(longerCallButtonGroup);
-			}
-
-			if(hideThirdParyCalls)
-				%init(hideThirdParyCallsGroup);
 		}
 	}
 }

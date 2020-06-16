@@ -1,4 +1,5 @@
 #import "PPHRootListController.h"
+#import "SparkColourPickerView.h"
 
 int (*BKSTerminateApplicationForReasonAndReportWithDescription)(NSString *displayIdentifier, int reason, int something, int something2);
 
@@ -12,8 +13,17 @@ int (*BKSTerminateApplicationForReasonAndReportWithDescription)(NSString *displa
 	{
         PPHAppearanceSettings *appearanceSettings = [[PPHAppearanceSettings alloc] init];
         self.hb_appearanceSettings = appearanceSettings;
-        self.closePhoneButton = [[UIBarButtonItem alloc] initWithTitle: @"Close Phone" style: UIBarButtonItemStylePlain target: self action: @selector(closePhone)];
-        self.closePhoneButton.tintColor = [UIColor blackColor];
+
+        UIButton *button = [UIButton buttonWithType: UIButtonTypeCustom];
+        button.titleLabel.numberOfLines = 2;
+        button.titleLabel.textAlignment = 1;
+        button.titleLabel.font = [UIFont systemFontOfSize: 17];
+        [button addTarget: self action: @selector(closePhone) forControlEvents: UIControlEventPrimaryActionTriggered];
+        [button setTitle: @"Close\nPhone" forState: UIControlStateNormal];
+        [button sizeToFit];
+
+        self.closePhoneButton = [[UIBarButtonItem alloc] initWithCustomView: button];
+        self.closePhoneButton.tintColor = [UIColor whiteColor];
         self.navigationItem.rightBarButtonItem = self.closePhoneButton;
 
         self.navigationItem.titleView = [UIView new];
@@ -22,7 +32,7 @@ int (*BKSTerminateApplicationForReasonAndReportWithDescription)(NSString *displa
         self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         self.titleLabel.text = @"PerfectPhone";
 		self.titleLabel.alpha = 0.0;
-        self.titleLabel.textColor = [UIColor blackColor];
+        self.titleLabel.textColor = [UIColor whiteColor];
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
         [self.navigationItem.titleView addSubview: self.titleLabel];
 
@@ -44,22 +54,7 @@ int (*BKSTerminateApplicationForReasonAndReportWithDescription)(NSString *displa
     CGRect frame = self.table.bounds;
     frame.origin.y = -frame.size.height;
 
-    self.navigationController.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:1.00 green:0.58 blue:0.00 alpha:1.0];
-    [self.navigationController.navigationController.navigationBar setShadowImage: [UIImage new]];
-    self.navigationController.navigationController.navigationBar.tintColor = [UIColor blackColor];
-    self.navigationController.navigationController.navigationBar.translucent = NO;
-}
-
-- (void)viewDidAppear: (BOOL)animated
-{
-    [super viewDidAppear: animated];
-    [self.navigationController.navigationController.navigationBar setTitleTextAttributes: @{NSForegroundColorAttributeName : [UIColor blackColor]}];
-}
-
-- (void)viewWillDisappear: (BOOL)animated
-{
-    [super viewWillDisappear: animated];
-    [self.navigationController.navigationController.navigationBar setTitleTextAttributes: @{NSForegroundColorAttributeName : [UIColor blackColor]}];
+    self.navigationController.navigationController.navigationBar.tintColor = [UIColor whiteColor];
 }
 
 - (void)scrollViewDidScroll: (UIScrollView*)scrollView
@@ -72,6 +67,41 @@ int (*BKSTerminateApplicationForReasonAndReportWithDescription)(NSString *displa
 {
 	if (!_specifiers) _specifiers = [self loadSpecifiersFromPlistName: @"Root" target: self];
 	return _specifiers;
+}
+
+- (void)reset: (PSSpecifier*)specifier
+{
+    UIAlertController *reset = [UIAlertController
+        alertControllerWithTitle: @"PerfectPhone"
+		message: @"Do you really want to Reset All Settings?"
+		preferredStyle: UIAlertControllerStyleAlert];
+	UIAlertAction *confirmAction = [UIAlertAction actionWithTitle: @"Confirm" style: UIAlertActionStyleDestructive handler:
+        ^(UIAlertAction * action)
+        {
+            [[[HBPreferences alloc] initWithIdentifier: @"com.johnzaro.perfectphoneprefs"] removeAllObjects];
+
+            NSFileManager *manager = [NSFileManager defaultManager];
+            [manager removeItemAtPath: @"/var/mobile/Library/Preferences/com.johnzaro.perfectphoneprefs.plist" error: nil];
+            [manager removeItemAtPath: @"/var/mobile/Library/Preferences/com.johnzaro.perfectphoneprefs.colors.plist" error: nil];
+
+            [self closePhone];
+            [self closeSettings];
+        }];
+
+	UIAlertAction *cancelAction = [UIAlertAction actionWithTitle: @"Cancel" style: UIAlertActionStyleCancel handler: nil];
+	[reset addAction: confirmAction];
+	[reset addAction: cancelAction];
+	[self presentViewController: reset animated: YES completion: nil];
+}
+
+- (void)closeSettings
+{
+	void *bk = dlopen("/System/Library/PrivateFrameworks/BackBoardServices.framework/BackBoardServices", RTLD_LAZY);
+	if (bk)
+    {
+        BKSTerminateApplicationForReasonAndReportWithDescription = (int (*)(NSString*, int, int, int))dlsym(bk, "BKSTerminateApplicationForReasonAndReportWithDescription");
+        BKSTerminateApplicationForReasonAndReportWithDescription(@"com.apple.Preferences", 1, 0, 0);
+    }
 }
 
 - (void)closePhone

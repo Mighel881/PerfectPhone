@@ -8,6 +8,7 @@ PerfectPhonePrefs_FILES = PPHAppearanceSettings.m PPHRootHeaderView.mm PPHRootLi
 PerfectPhonePrefs_INSTALL_PATH = /Library/PreferenceBundles
 PerfectPhonePrefs_FRAMEWORKS = UIKit
 PerfectPhonePrefs_PRIVATE_FRAMEWORKS = Preferences
+PerfectPhonePrefs_LIBRARIES = sparkcolourpicker
 PerfectPhonePrefs_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 PerfectPhonePrefs_EXTRA_FRAMEWORKS = Cephei CepheiPrefs
 
